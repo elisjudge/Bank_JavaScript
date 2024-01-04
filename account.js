@@ -13,17 +13,23 @@ class Account {
     }
 
     deposit(amountToAdd) {
-        console.log(`Depositing $${amountToAdd}`);
-        this._balance += amountToAdd;
+        if (amountToAdd > 0) {
+            this._balance += amountToAdd;
+            return true;
+        }
+        return false;
     }
 
     withdraw(amountToSubtract) {
-        console.log(`Withdrawing $${amountToSubtract}`);
-        this._balance -= amountToSubtract;
+        if ((amountToSubtract <= this._balance) && (amountToSubtract > 0)) {
+            this._balance -= amountToSubtract;
+            return true;
+        }
+        return false;
     }
 
     printAccount() {
-        console.log(`Account Name: ${this.name}, Account Balance $${this.balance}`);
+        console.log(`Account Name: ${this.name}, Account Balance $${this.balance}`)
     }
 }
 
