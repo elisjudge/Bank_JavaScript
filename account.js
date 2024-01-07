@@ -29,7 +29,7 @@ class Account {
     }
 
     printAccount() {
-        console.log(`Account Name: ${this.name}, Account Balance $${this.balance}`)
+        console.log(`Account Name: ${this.name}, Account Balance $${this.balance}`);
     }
 }
 

@@ -17,10 +17,8 @@ The program was originally written in C#, however I have reimplemented it using 
 3. Run the application: `node main.js`
 
 ## Version History & Usage
-
 You can go back and review the code to see how the program changes over each iteration.
 
 * Version 3.0: Implemented Transaction classes, enable transfer between two accounts.
 * Version 2.0: Added a basic terminal UI and simple validation rules for deposits and withdrawals.
-
-- Version 1.0: Creates an Account, performs deposit and withdraw functions and prints balance to the terminal.
+* Version 1.0: Creates an Account, performs deposit and withdraw functions and prints balance to the terminal.
