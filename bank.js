@@ -1,6 +1,7 @@
 class Bank {
     constructor() {
         this._accounts = [];
+        this._transactions = [];
     }
 
     addAccount(account) {
@@ -14,6 +15,13 @@ class Bank {
 
     executeTransaction(transaction) {
         transaction.execute();
+        this._transactions.push(transaction);
+    }
+
+    printTransactionHistory() {
+        for (let transaction in this._transactions) {
+            this._transactions[transaction].print();
+        }
     }
 }
 
