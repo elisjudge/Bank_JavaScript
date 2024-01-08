@@ -1,23 +1,14 @@
+const Transaction = require('./transaction');
 const DepositTransaction = require('./depositTransaction');
 const WithdrawTransaction = require('./withdrawTransaction');
 
-class TransferTransaction {
+class TransferTransaction extends Transaction {
     constructor(fromAccount, toAccount, amount) {
+        super(amount);
         this._fromAccount = fromAccount;
-        this._toAccount = toAccount;
-        this._amount = amount;
+        this._toAccount = toAccount;    
         this._theWithdraw = new WithdrawTransaction(this._fromAccount, this._amount);
         this._theDeposit = new DepositTransaction(this._toAccount, this._amount);
-        this._executed = false;
-        this._reversed = false;
-    }
-
-    get executed() {
-        return this._executed;
-    }
-
-    get reversed() {
-        return this._reversed;
     }
 
     get succeeded() {
@@ -30,9 +21,7 @@ class TransferTransaction {
     }
 
     execute() {
-        if (this._executed) {
-            throw `Transaction cannot be executed. It has aleady been executed.`;
-        }
+        super.execute();
         this._theWithdraw.execute();
         if (this._theWithdraw.succeeded) {
             this._theDeposit.execute();
@@ -49,12 +38,7 @@ class TransferTransaction {
     }
 
     rollback() {
-        if (!this._executed) {
-            throw `Cannot rollback this transaction. It has not been executed.`;
-        }
-        if (this._reversed) {
-            throw `Cannot rollback this transaction. It has already been reversed.`;
-        }
+        super.rollback();
         if (this._theWithdraw.succeeded) {
             this._theWithdraw.rollback();
         }

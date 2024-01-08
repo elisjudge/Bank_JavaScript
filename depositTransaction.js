@@ -1,39 +1,24 @@
-class DepositTransaction {
-    constructor(account, amount) {
-        this._account = account;
-        this._amount = amount;
-        this._executed = false;
-        this._succeeded = false;
-        this._reversed = false;
-    }
+const Transaction = require('./transaction');
 
-    get executed() {
-        return this._executed;
+class DepositTransaction extends Transaction {
+    constructor(account, amount) {
+        super(amount);
+        this._account = account;
+        this._succeeded = false;
+        
     }
 
     get succeeded() {
         return this._succeeded;
     }
 
-    get reversed() {
-        return this._reversed;
-    }
-
     execute() {
-        if (this._executed) {
-            throw `Cannot execute this transaction as it has already been executed.`;
-        }
-        this._executed = true;
+        super.execute();
         this._succeeded = this._account.deposit(this._amount);
     }
 
     rollback() {
-        if (!this._executed) {
-            throw `Cannot reverse a transaction that has not already been executed.`
-        }
-        if (this._reversed) {
-            throw `Cannot reverse a transaction that has already been reversed.`
-        }
+        super.rollback();
         if (this._account.withdraw(this._amount)) {
             this._reversed = true;
             this._executed = false;

@@ -19,12 +19,13 @@ function readUserOption() {
         3. Withdraw Funds,
         4. Transfer Funds,
         5. Show Account Balance,
-        6. Quit`);
+        6. Show List of Transactions,
+        7. Quit`);
 
-        rl.question('Choose an option [1-6]: ', (input) => {
+        rl.question('Choose an option [1-7]: ', (input) => {
             const option = parseInt(input);
             
-            if (!isNaN(option) && option >= 1 && option <= 6) {
+            if (!isNaN(option) && option >= 1 && option <= 7) {
                 resolve(option);
             } else {
                 console.log('Please make sure that you select a valid option');
@@ -219,6 +220,9 @@ async function main() {
             case MenuOption.Print:
                 await doPrint(bank);
                 break;
+            case MenuOption.PrintTransactions:
+                bank.printTransactionHistory();
+                break;
             case MenuOption.Quit:
                 console.log(`Quit`);
                 break;
@@ -234,7 +238,8 @@ const MenuOption = Object.freeze({
 	Withdraw: 3,
     Transfer: 4,
 	Print: 5,
-	Quit: 6
+    PrintTransactions: 6,
+	Quit: 7
 });
 
 if (require.main === module) {
