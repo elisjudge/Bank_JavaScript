@@ -1,4 +1,5 @@
 const Account = require('./account');
+const Bank = require('./bank');
 const DepositTransaction = require('./depositTransaction');
 const WithdrawTransaction = require('./withdrawTransaction');
 const TransferTransaction = require('./transferTransaction')
@@ -7,22 +8,23 @@ const readline = require('readline');
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
-  });
+});
 
 
 function readUserOption() {
     return new Promise((resolve) => {
         console.log(`Type one of the following options:
-        1. Deposit Funds,
-        2. Withdraw Funds,
-        3. Transfer Funds,
-        4. Show Account Balance,
-        5. Quit`);
+        1. Add Account,
+        2. Deposit Funds,
+        3. Withdraw Funds,
+        4. Transfer Funds,
+        5. Show Account Balance,
+        6. Quit`);
 
-        rl.question('Choose an option [1-5]: ', (input) => {
+        rl.question('Choose an option [1-6]: ', (input) => {
             const option = parseInt(input);
             
-            if (!isNaN(option) && option >= 1 && option <= 5) {
+            if (!isNaN(option) && option >= 1 && option <= 6) {
                 resolve(option);
             } else {
                 console.log('Please make sure that you select a valid option');
@@ -33,6 +35,57 @@ function readUserOption() {
     });
 }
 
+function readAccountName() {
+    return new Promise((resolve) => {
+        rl.question("Please enter the account name: ", (input) => {
+            resolve(input || '')
+        });
+    });
+}
+
+function readOpeningBalance() {
+    return new Promise((resolve) => {
+        rl.question("Please enter the opening balance: ", (input) => {
+            resolve(input);
+        });
+    });
+}
+
+async function findAccount(fromBank) {
+    let name;
+    let result;
+    do {
+        name = await readAccountName();
+    } while (name === null && name === undefined && name === '' );
+
+    result = fromBank.getAccount(name);
+    if (result == null) {
+        console.log(`No account with ${name}.`)
+    }
+    return result;
+}
+
+async function doAddAccount(toBank) {
+    let accountName;
+    let openingBalance;
+    do {
+        accountName = await readAccountName();
+    } while (accountName === null || accountName === undefined || accountName === '' );
+
+    while (true) {
+        try {
+            openingBalance = parseFloat(await readOpeningBalance());
+            if (openingBalance < 0) {
+                throw `Account balance cannot be a negative number.`
+            }
+            toBank.addAccount(new Account(accountName, openingBalance))
+            break;
+        } catch (err) {
+            console.log(err);
+        }
+    }
+}
+
 function readDepositAmount() {
     return new Promise((resolve) => {
         rl.question("Please enter the amount that you wish to deposit: ", (input) => {
@@ -41,15 +94,23 @@ function readDepositAmount() {
     });
 }
 
-async function doDeposit(account) {
+async function doDeposit(bank) {
+    let account;
+    account = await findAccount(bank);
+    if (account == null) {
+        return;
+    }
+    
     let depositAmount;
     try {
         depositAmount = parseFloat(await readDepositAmount());
-        const transaction = new DepositTransaction(account, depositAmount);
-        transaction.execute();
-        transaction.print();
-    }
-    catch (err) {
+        const depositTransaction = new DepositTransaction(account, depositAmount);
+        bank.executeTransaction(depositTransaction);
+        if (!depositTransaction.succeeded) {
+            throw `Deposit was not successful`;
+        }
+        depositTransaction.print();
+    } catch (err) {
         console.log(err);
     }
 }
@@ -62,15 +123,23 @@ function readWithdrawAmount() {
     });
 }
 
-async function doWithdraw(account) {
+async function doWithdraw(bank) {
+    let account;
+    account = await findAccount(bank);
+    if (account == null) {
+        return;
+    }
+    
     let withdrawAmount;
     try {
         withdrawAmount = parseFloat(await readWithdrawAmount());
-        const transaction = new WithdrawTransaction(account, withdrawAmount);
-        transaction.execute();
-        transaction.print();
-    }
-    catch (err) {
+        const withdrawTransaction = new WithdrawTransaction(account, withdrawAmount);
+        bank.executeTransaction(withdrawTransaction);
+        if (!withdrawTransaction.succeeded){
+            throw `Withdraw was not successful.`
+        }
+        withdrawTransaction.print();
+    } catch (err) {
         console.log(err);
     }
 }
@@ -83,43 +152,72 @@ function readTransferAmount(toAccount) {
     });
 }
 
-async function doTransfer(fromAccount, toAccount) {
-    let transferAmount;
+async function doTransfer(bank) {
+    let fromAccount;
+    let toAccount;
+
     try {
-        transferAmount = parseFloat(await readTransferAmount(toAccount));
-        const transaction = new TransferTransaction(fromAccount, toAccount, transferAmount);
-        transaction.execute();
-        transaction.print();
-    }
-    catch (err) {
+        fromAccount = await findAccount(bank);
+        if (fromAccount == null) {
+            return;
+        }
+
+        toAccount = await findAccount(bank);
+        if (toAccount == null) {
+            return;
+        }
+
+        if (fromAccount === toAccount) {
+            throw `You cannot transfer between the same account.`;
+        }
+        
+        let transferAmount;
+        try {
+            transferAmount = parseFloat(await readTransferAmount(toAccount));
+            const transferTransaction = new TransferTransaction(fromAccount, toAccount, transferAmount);
+            bank.executeTransaction(transferTransaction);
+            if (!transferTransaction.succeeded) {
+                throw `Transfer was not successful.`
+            }
+            transferTransaction.print();
+        } catch (err) {
+            console.log(err);
+        }
+    } catch (err) {
         console.log(err);
     }
 }
 
-function doPrint(account) {
+async function doPrint(bank) {
+    let account;
+    account = await findAccount(bank);
+    if (account == null) {
+        return;
+    }
     account.printAccount();
 }
 
 async function main() {
-    const account_001 = new Account('John', 100);
-    const account_002 = new Account('Mike', 100);
+    const bank = new Bank();
     let userSelection = 0;
     do {
         userSelection = await readUserOption();
         
         switch(userSelection){
+            case MenuOption.AddAccount:
+                await doAddAccount(bank);
+                break;
             case MenuOption.Deposit:
-                await doDeposit(account_001);
+                await doDeposit(bank);
                 break;
             case MenuOption.Withdraw:
-                await doWithdraw(account_001);
+                await doWithdraw(bank);
                 break;
             case MenuOption.Transfer:
-                await doTransfer(account_001, account_002);
+                await doTransfer(bank);
                 break;
             case MenuOption.Print:
-                doPrint(account_001);
-                doPrint(account_002);
+                await doPrint(bank);
                 break;
             case MenuOption.Quit:
                 console.log(`Quit`);
@@ -131,11 +229,12 @@ async function main() {
 }
 
 const MenuOption = Object.freeze({
-	Deposit: 1,
-	Withdraw: 2,
-    Transfer: 3,
-	Print: 4,
-	Quit: 5
+	AddAccount: 1,
+    Deposit: 2,
+	Withdraw: 3,
+    Transfer: 4,
+	Print: 5,
+	Quit: 6
 });
 
 if (require.main === module) {

@@ -17,7 +17,10 @@ The program was originally written in C#, however I have reimplemented it using 
 3. Run the application: `node main.js`
 
 ## Version History & Usage
+
 You can go back and review the code to see how the program changes over each iteration.
+
+* Version 4.0: Implemented Bank class, enable account creation and account fetching.
 
 * Version 3.0: Implemented Transaction classes, enable transfer between two accounts.
 * Version 2.0: Added a basic terminal UI and simple validation rules for deposits and withdrawals.
